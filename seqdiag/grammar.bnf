@@ -1,0 +1,208 @@
+/*
+ * Gocc BNF
+ */
+
+/* Lexical Part */
+
+/** Rune definitions **/
+
+_letter : 'A'-'Z' | 'a'-'z' ;
+_digit : '0'-'9' ;
+_hyphen : '-' ;
+_underscore : '_' ;
+_period : '.' ;
+_space : ' ' ;
+_tab : '\t' ;
+_newline : '\r' | '\n' ;
+_whitespace : _space | _tab | _newline ;
+_symbol : '\x21'-'\x2f' | '\x3a'-'\x40' | '\x5b'-'\x60' | '\x7b'-'\x7e' ;
+_symbol_expect_dq : '\x21' | '\x23'-'\x2f' | '\x3a'-'\x40' | '\x5b'-'\x60' | '\x7b'-'\x7e' ;
+_symbol_expect_sq : '\x21'-'\x26' | '\x28'-'\x2f' | '\x3a'-'\x40' | '\x5b'-'\x60' | '\x7b'-'\x7e' ;
+_ascii_printable : _letter | _digit | _symbol ;
+_ascii_printable_expect_dq : _letter | _digit | _symbol_expect_dq ;
+_ascii_printable_expect_sq : _letter | _digit | _symbol_expect_sq ;
+_unicode : '\u0080'-'\uffff' ;
+_rune : _ascii_printable | _unicode ;
+_rune_expect_dq : _ascii_printable_expect_dq | _unicode ;
+_rune_expect_sq : _ascii_printable_expect_sq | _unicode ;
+
+/** Token definitions **/
+
+_multiline_comment : '/' '*' (_rune | _whitespace) {(_rune | _whitespace)} '*' '/' ;
+_singleline_comment : ('/' '/' | '#') (_rune | _space | _tab) { (_rune | _space | _tab) } _newline ;
+!comment : _multiline_comment | _singleline_comment ;
+
+_separator_mark_eq : '=' '=' '=' ;
+_separator_mark_dot : '.' '.' '.' ;
+_separator_eq : _separator_mark_eq _rune { _rune } _separator_mark_eq ;
+_separator_dot : _separator_mark_dot _rune { _rune } _separator_mark_dot ;
+separator : _separator_eq | _separator_dot ;
+
+_namehead : _letter | _digit | _underscore | _unicode ;
+_namechar : _letter | _digit | _underscore | _hyphen | _period | _unicode ;
+name : _namehead { _namechar } ;
+
+edge : (['<'] '<' '-' ['-']) | (['-'] '-' '>' ['>']) | ('=' '>') ;
+
+number : [_hyphen] (_digit | _period) {(_digit | _period)} ;
+
+_string_dq : '"' (_rune_expect_dq | _whitespace) { (_rune_expect_dq | _whitespace) } '"' ;
+_string_sq : '\'' (_rune_expect_sq | _whitespace) { (_rune_expect_sq | _whitespace) } '\'' ;
+string : _string_dq | _string_sq ;
+
+!whitespace : ' ' | _tab | _newline ;
+
+
+/* Syntax Part */
+
+<< import "github.com/rsp9u/seq2xls/seqdiag/ast" >>
+
+Diagram
+	: "{" "}"									<< ast.NewDiagram(ast.NewEmptyID(), &ast.DiagramInlineStmtList{}) >>
+	| "{" DiagramInlineStmtList "}"				<< ast.NewDiagram(ast.NewEmptyID(), $1) >>
+	| DiagramID "{" "}"							<< ast.NewDiagram($0, &ast.DiagramInlineStmtList{}) >>
+	| DiagramID "{" DiagramInlineStmtList "}"	<< ast.NewDiagram($0, $2) >>
+	;
+
+DiagramInlineStmtList
+	: DiagramInlineStmtSc							<< ast.NewDiagramInlineStmtList(nil, $0) >>
+	| DiagramInlineStmtList DiagramInlineStmtSc		<< ast.NewDiagramInlineStmtList($0, $1) >>
+	;
+
+DiagramInlineStmtSc
+	: DiagramInlineStmt
+	| DiagramInlineStmt ";"		<< $0, nil >>
+	;
+
+DiagramInlineStmt
+	: ExtensionStmt	
+	| AttributeStmt
+	| FragmentStmt
+	| GroupStmt
+	| EdgeStmt
+	| SeparatorStmt
+	| NodeStmt
+	;
+
+DiagramID
+	: "diagram"		<< ast.NewEmptyID(), nil >>
+	| "seqdiag"		<< ast.NewEmptyID(), nil >>
+	| "diagram" ID	<< $1, nil >>
+	| "seqdiag" ID	<< $1, nil >>
+	;
+
+ExtensionStmt
+	: "class" ID OptionList		<< nil, nil >>
+	| "plugin" ID OptionList	<< nil, nil >>
+	;
+
+FragmentStmt
+	: FragmentType "{" "}"								<< ast.NewFragmentStmt($0, ast.NewEmptyID(), &ast.FragmentInlineStmtList{}) >>
+	| FragmentType "{" FragmentInlineStmtList "}"		<< ast.NewFragmentStmt($0, ast.NewEmptyID(), $2) >>
+	| FragmentType ID "{" "}"							<< ast.NewFragmentStmt($0, $1, &ast.FragmentInlineStmtList{}) >>
+	| FragmentType ID "{" FragmentInlineStmtList "}"	<< ast.NewFragmentStmt($0, $1, $3) >>
+	;
+
+FragmentType
+	: "alt"		<< ast.TokenToString($0), nil >>
+	| "loop"	<< ast.TokenToString($0), nil >>
+	;
+
+FragmentInlineStmtList
+	: FragmentInlineStmtSc							<< ast.NewFragmentInlineStmtList(nil, $0) >>
+	| FragmentInlineStmtList FragmentInlineStmtSc	<< ast.NewFragmentInlineStmtList($0, $1) >>
+	;
+
+FragmentInlineStmtSc
+	: FragmentInlineStmt
+	| FragmentInlineStmt ";"	<< $0, nil >>
+	;
+
+FragmentInlineStmt
+	: AttributeStmt
+	| FragmentStmt
+	| EdgeStmt
+	| NodeStmt
+	;
+
+GroupStmt
+	: "group" "{" "}"							<< ast.NewGroupStmt(ast.NewEmptyID(), &ast.GroupInineStmtList{}) >>
+	| "group" "{" GroupInlineStmtList "}"		<< ast.NewGroupStmt(ast.NewEmptyID(), $2) >>
+	| "group" ID "{" "}"						<< ast.NewGroupStmt($1, &ast.GroupInineStmtList{}) >>
+	| "group" ID "{" GroupInlineStmtList "}"	<< ast.NewGroupStmt($1, $3) >>
+	;
+
+GroupInlineStmtList
+	: GroupInlineStmtSc							<< ast.NewGroupInineStmtList(nil, $0) >>
+	| GroupInlineStmtList GroupInlineStmtSc		<< ast.NewGroupInineStmtList($0, $1) >>
+	;
+
+GroupInlineStmtSc
+	: GroupInlineStmt
+	| GroupInlineStmt ";"	<< $0, nil >>
+	;
+
+GroupInlineStmt
+	: AttributeStmt
+	| NodeStmt
+	;
+
+EdgeStmt
+	: EdgeSegmentList OptionList			<< ast.NewEdgeStmt($0, $1, &ast.EdgeBlockInlineStmtList{}) >>
+	| EdgeSegmentList OptionList EdgeBlock	<< ast.NewEdgeStmt($0, $1, $2) >>
+	; 
+
+EdgeSegmentList
+	: ID edge ID				<< ast.NewEdgeSegmentList($0, $1, $2) >>
+	| EdgeSegmentList edge ID	<< ast.AppendEdgeSegment($0, $1, $2) >>
+	;
+
+EdgeBlockInlineStmtList
+	: EdgeBlockInlineStmt							<< ast.NewEdgeBlockInlineStmtList(nil, $0) >>
+	| EdgeBlockInlineStmtList EdgeBlockInlineStmt	<< ast.NewEdgeBlockInlineStmtList($1, $0) >>
+	;
+
+EdgeBlockInlineStmt
+	: EdgeStmt
+	| EdgeStmt ";"		<< $0, nil >>
+	| SeparatorStmt
+	;
+
+EdgeBlock
+	: "{" "}"							<< nil, nil >>
+	| "{" EdgeBlockInlineStmtList "}"	<< $1, nil >>
+	;
+
+SeparatorStmt
+	: separator		<< ast.NewSeparatorStmt($0) >>
+	;
+
+NodeStmt
+	: ID OptionList		<< ast.NewNodeStmt($0, $1) >>
+	;
+
+AttributeStmt
+	: ID "=" ID		<< ast.NewAttributeStmt($0, $2) >>
+	;
+
+OptionList
+	: empty							<< ast.NewOptionList(nil, nil) >>
+	| "[" "]"						<< ast.NewOptionList(nil, nil) >>
+	| "[" OptionInlineStmtList "]"	<< $1, nil >>
+	;
+
+OptionInlineStmtList
+	: OptionInlineStmt								<< ast.NewOptionList(nil, $0) >>
+	| OptionInlineStmtList "," OptionInlineStmt		<< ast.NewOptionList($0, $2) >>
+	;
+
+OptionInlineStmt
+	: ID			<< ast.NewOption($0, ast.NewEmptyID()) >>
+	| ID "=" ID		<< ast.NewOption($0, $2) >>
+	;
+
+ID
+	: name		<< ast.NewID($0, "name") >>
+	| number	<< ast.NewID($0, "number") >>
+	| string	<< ast.NewID($0, "string") >>
+	;
