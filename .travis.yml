@@ -1,0 +1,7 @@
+language: go
+go:
+  - "1.11"
+install:
+  - make seqdiag
+script:
+  - make test
