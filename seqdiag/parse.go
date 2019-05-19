@@ -6,6 +6,7 @@ import (
 	"github.com/rsp9u/seq2xls/seqdiag/parser"
 )
 
+// ParseSeqdiag parses the given 'seqdiag' text and converts into Go structures.
 func ParseSeqdiag(b []byte) *ast.Diagram {
 	lex := lexer.NewLexer(b)
 	p := parser.NewParser()

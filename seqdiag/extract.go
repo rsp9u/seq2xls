@@ -5,6 +5,7 @@ import (
 	"github.com/rsp9u/seq2xls/seqdiag/ast"
 )
 
+// ExtractLifelines extracts lifeline elements from the diagram.
 func ExtractLifelines(d *ast.Diagram) ([]*model.Lifeline, error) {
 	lls := []*model.Lifeline{}
 	lls, _, err := extractLifelinesFromStmts(d.Stmts.Items, lls, 0)
@@ -36,15 +37,15 @@ func extractLifelinesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, index in
 				if !containsLifeline(lls, sgmt.LeftNode.Value) {
 					ll := &model.Lifeline{Name: sgmt.LeftNode.Value, Index: index, ColorHex: "FFFFFF"}
 					lls = append(lls, ll)
-					index += 1
-					indexCnt += 1
+					index++
+					indexCnt++
 				}
 
 				if !containsLifeline(lls, sgmt.RightNode.Value) {
 					ll := &model.Lifeline{Name: sgmt.RightNode.Value, Index: index, ColorHex: "FFFFFF"}
 					lls = append(lls, ll)
-					index += 1
-					indexCnt += 1
+					index++
+					indexCnt++
 				}
 			}
 
@@ -60,8 +61,8 @@ func extractLifelinesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, index in
 			if !containsLifeline(lls, v.ID.Value) {
 				ll := &model.Lifeline{Name: v.ID.Value, Index: index, ColorHex: "FFFFFF"}
 				lls = append(lls, ll)
-				index += 1
-				indexCnt += 1
+				index++
+				indexCnt++
 			}
 		}
 	}

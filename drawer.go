@@ -6,6 +6,9 @@ import (
 	"github.com/rsp9u/seq2xls/model"
 )
 
+// DrawLifelines adds the shapes composes 'Lifeline' into the spreadsheet.
+//
+// 'Lifeline' is composed of a rectangle and a dashed line.
 func DrawLifelines(ss *oxml.Spreadsheet, lls []*model.Lifeline, nMsg int) {
 	const (
 		marginX = 20
