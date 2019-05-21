@@ -51,15 +51,15 @@ func TestExtractLifelines(t *testing.T) {
 
 const testDataMessage = `
 seqdiag {
-  foo -> bar;
-  foo -> bar --> baz;
-  foo => bar => baz;
+  foo  -> bar;
+  foo <-- bar
+  foo --> bar --> baz;
   loop {
     foo  -> bar;
     foo <-- bar;
   }
   foo -> bar {
-    baz => qux => quux;
+    baz -> qux;
   }
   foo -> foo;
 }
@@ -91,23 +91,17 @@ func TestExtractMessages(t *testing.T) {
 		t.Fatalf("Extract error %v", err)
 	}
 
-	if len(msgs) != 15 {
+	if len(msgs) != 9 {
 		t.Fatalf("Too many or few messages %d", len(msgs))
 	}
 
 	checkMessage(t, msgs[0], 0, "foo", "bar", model.Synchronous)
-	checkMessage(t, msgs[1], 1, "foo", "bar", model.Synchronous)
-	checkMessage(t, msgs[2], 2, "bar", "baz", model.Asynchronous)
-	checkMessage(t, msgs[3], 3, "foo", "bar", model.Synchronous)
-	checkMessage(t, msgs[4], 4, "bar", "baz", model.Synchronous)
-	checkMessage(t, msgs[5], 5, "baz", "bar", model.Synchronous)
-	checkMessage(t, msgs[6], 6, "bar", "foo", model.Synchronous)
-	checkMessage(t, msgs[7], 7, "foo", "bar", model.Synchronous)
-	checkMessage(t, msgs[8], 8, "bar", "foo", model.Reply)
-	checkMessage(t, msgs[9], 9, "foo", "bar", model.Synchronous)
-	checkMessage(t, msgs[10], 10, "baz", "qux", model.Synchronous)
-	checkMessage(t, msgs[11], 11, "qux", "quux", model.Synchronous)
-	checkMessage(t, msgs[12], 12, "quux", "qux", model.Synchronous)
-	checkMessage(t, msgs[13], 13, "qux", "baz", model.Synchronous)
-	checkMessage(t, msgs[14], 14, "foo", "foo", model.SelfReference)
+	checkMessage(t, msgs[1], 1, "bar", "foo", model.Reply)
+	checkMessage(t, msgs[2], 2, "foo", "bar", model.Asynchronous)
+	checkMessage(t, msgs[3], 3, "bar", "baz", model.Asynchronous)
+	checkMessage(t, msgs[4], 4, "foo", "bar", model.Synchronous)
+	checkMessage(t, msgs[5], 5, "bar", "foo", model.Reply)
+	checkMessage(t, msgs[6], 6, "foo", "bar", model.Synchronous)
+	checkMessage(t, msgs[7], 7, "baz", "qux", model.Synchronous)
+	checkMessage(t, msgs[8], 8, "foo", "foo", model.SelfReference)
 }

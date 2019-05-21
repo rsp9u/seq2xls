@@ -1,6 +1,8 @@
 package seqdiag
 
 import (
+	"strings"
+
 	"github.com/rsp9u/seq2xls/model"
 	"github.com/rsp9u/seq2xls/seqdiag/ast"
 )
@@ -25,6 +27,12 @@ func extractLifelinesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, index in
 	for _, stmt := range stmts {
 		switch v := stmt.(type) {
 		case *ast.FragmentStmt:
+			lls, indexPlus, err = extractLifelinesFromStmts(v.Stmts.Items, lls, index)
+			if err != nil {
+				return nil, 0, err
+			}
+			index += indexPlus
+
 		case *ast.GroupStmt:
 			lls, indexPlus, err = extractLifelinesFromStmts(v.Stmts.Items, lls, index)
 			if err != nil {
@@ -99,6 +107,12 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 	for _, stmt := range stmts {
 		switch v := stmt.(type) {
 		case *ast.FragmentStmt:
+			msgs, indexPlus, err = extractMessagesFromStmts(v.Stmts.Items, lls, msgs, index)
+			if err != nil {
+				return nil, 0, err
+			}
+			index += indexPlus
+
 		case *ast.GroupStmt:
 			msgs, indexPlus, err = extractMessagesFromStmts(v.Stmts.Items, lls, msgs, index)
 			if err != nil {
@@ -109,10 +123,10 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 		case *ast.EdgeStmt:
 			for _, sgmt := range v.EdgeSegments.Items {
 				msg := &model.Message{
-					Index: index,
-					From: getLifeline(lls, sgmt.LeftNode.Value),
-					To: getLifeline(lls, sgmt.RightNode.Value),
-					Type: getMessageType(sgmt.Edge),
+					Index:    index,
+					From:     getLifeline(lls, getFromNode(sgmt).Value),
+					To:       getLifeline(lls, getToNode(sgmt).Value),
+					Type:     getMessageType(sgmt),
 					ColorHex: "000000",
 				}
 				msgs = append(msgs, msg)
@@ -121,7 +135,7 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 			}
 
 			if v.EdgeBlock != nil {
-				lls, indexPlus, err = extractLifelinesFromStmts(v.EdgeBlock.Items, lls, index)
+				msgs, indexPlus, err = extractMessagesFromStmts(v.EdgeBlock.Items, lls, msgs, index)
 				if err != nil {
 					return nil, 0, err
 				}
@@ -130,5 +144,44 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 		}
 	}
 
-	return lls, indexCnt, nil
+	return msgs, indexCnt, nil
+}
+
+func getLifeline(lls []*model.Lifeline, name string) *model.Lifeline {
+	for _, ll := range lls {
+		if ll.Name == name {
+			return ll
+		}
+	}
+	return nil
+}
+
+func getFromNode(sgmt *ast.EdgeSegment) *ast.ID {
+	if strings.HasSuffix(sgmt.Edge, ">") {
+		return sgmt.LeftNode
+	}
+	return sgmt.RightNode
+}
+
+func getToNode(sgmt *ast.EdgeSegment) *ast.ID {
+	if strings.HasSuffix(sgmt.Edge, ">") {
+		return sgmt.RightNode
+	}
+	return sgmt.LeftNode
+}
+
+func getMessageType(sgmt *ast.EdgeSegment) model.MessageType {
+	if sgmt.LeftNode.Value == sgmt.RightNode.Value {
+		return model.SelfReference
+	}
+	switch sgmt.Edge {
+	case "->", "->>":
+		return model.Synchronous
+	case "-->", "-->>":
+		return model.Asynchronous
+	case "<-", "<--", "<<-", "<<--":
+		return model.Reply
+	default:
+		return model.Synchronous
+	}
 }
