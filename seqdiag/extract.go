@@ -3,6 +3,7 @@ package seqdiag
 import (
 	"strings"
 
+	"github.com/golang-collections/collections/stack"
 	"github.com/rsp9u/seq2xls/model"
 	"github.com/rsp9u/seq2xls/seqdiag/ast"
 )
@@ -32,6 +33,7 @@ func extractLifelinesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, index in
 				return nil, 0, err
 			}
 			index += indexPlus
+			indexCnt += indexPlus
 
 		case *ast.GroupStmt:
 			lls, indexPlus, err = extractLifelinesFromStmts(v.Stmts.Items, lls, index)
@@ -39,6 +41,7 @@ func extractLifelinesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, index in
 				return nil, 0, err
 			}
 			index += indexPlus
+			indexCnt += indexPlus
 
 		case *ast.EdgeStmt:
 			for _, sgmt := range v.EdgeSegments.Items {
@@ -63,6 +66,7 @@ func extractLifelinesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, index in
 					return nil, 0, err
 				}
 				index += indexPlus
+				indexCnt += indexPlus
 			}
 
 		case *ast.NodeStmt:
@@ -112,6 +116,7 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 				return nil, 0, err
 			}
 			index += indexPlus
+			indexCnt += indexPlus
 
 		case *ast.GroupStmt:
 			msgs, indexPlus, err = extractMessagesFromStmts(v.Stmts.Items, lls, msgs, index)
@@ -119,19 +124,30 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 				return nil, 0, err
 			}
 			index += indexPlus
+			indexCnt += indexPlus
 
 		case *ast.EdgeStmt:
+			tripReplySgmts := stack.New()
 			for _, sgmt := range v.EdgeSegments.Items {
+				edgeType := getMessageType(sgmt)
 				msg := &model.Message{
 					Index:    index,
 					From:     getLifeline(lls, getFromNode(sgmt).Value),
 					To:       getLifeline(lls, getToNode(sgmt).Value),
-					Type:     getMessageType(sgmt),
+					Type:     edgeType,
 					ColorHex: "000000",
 				}
 				msgs = append(msgs, msg)
 				index++
 				indexCnt++
+
+				if edgeType != model.SelfReference && isTripMessage(sgmt) {
+					tripReplySgmts.Push(&ast.EdgeSegment{
+						LeftNode:  sgmt.LeftNode,
+						RightNode: sgmt.RightNode,
+						Edge:      "<-",
+					})
+				}
 			}
 
 			if v.EdgeBlock != nil {
@@ -140,6 +156,24 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 					return nil, 0, err
 				}
 				index += indexPlus
+				indexCnt += indexPlus
+			}
+
+			for tripReplySgmts.Len() != 0 {
+				s := tripReplySgmts.Pop()
+				sgmt, ok := s.(*ast.EdgeSegment)
+				if ok {
+					msg := &model.Message{
+						Index:    index,
+						From:     getLifeline(lls, getFromNode(sgmt).Value),
+						To:       getLifeline(lls, getToNode(sgmt).Value),
+						Type:     getMessageType(sgmt),
+						ColorHex: "000000",
+					}
+					msgs = append(msgs, msg)
+					index++
+					indexCnt++
+				}
 			}
 		}
 	}
@@ -175,7 +209,7 @@ func getMessageType(sgmt *ast.EdgeSegment) model.MessageType {
 		return model.SelfReference
 	}
 	switch sgmt.Edge {
-	case "->", "->>":
+	case "->", "->>", "=>":
 		return model.Synchronous
 	case "-->", "-->>":
 		return model.Asynchronous
@@ -184,4 +218,8 @@ func getMessageType(sgmt *ast.EdgeSegment) model.MessageType {
 	default:
 		return model.Synchronous
 	}
+}
+
+func isTripMessage(sgmt *ast.EdgeSegment) bool {
+	return sgmt.Edge == "=>"
 }
