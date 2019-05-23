@@ -11,7 +11,7 @@ test: seqdiag
 	cd ..
 
 seq2xls: seqdiag *.go cmd/main.go
-	go build -o seq2xls cmd/main.go
+	go build -o bin/seq2xls cmd/main.go
 
 .PHONY: seqdiag
 seqdiag: gocc
