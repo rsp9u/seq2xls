@@ -11,12 +11,23 @@ seqdiag {
   webserver; database; browser;
   browser  -> webserver [label = "GET /index.html"];
   browser <-- webserver;
-  browser  -> webserver [label = "POST /blog/comment"];
-              webserver  -> database [label = "INSERT comment"];
-              webserver <-- database;
-  browser <-- webserver;
+  group {
+    foo; bar;
+  }
+  loop {
+    baz; qux; 
+  }
 }
 `
+
+func checkLifeline(t *testing.T, ll *model.Lifeline, idx int, name string) {
+	if ll.Index != idx {
+		t.Fatalf("Invalid lifeline index %s[%d]", ll.Name, ll.Index)
+	}
+	if ll.Name != name {
+		t.Fatalf("Mismatches lifeline name [expect: %s, actual: %s]", name, ll.Name)
+	}
+}
 
 func TestExtractLifelines(t *testing.T) {
 	d := ParseSeqdiag([]byte(testDataLifeline))
@@ -25,28 +36,17 @@ func TestExtractLifelines(t *testing.T) {
 		t.Fatalf("Extract error %v", err)
 	}
 
-	if len(lls) > 3 {
+	if len(lls) > 7 {
 		t.Fatalf("Too many lifelines %d", len(lls))
 	}
 
-	for _, ll := range lls {
-		switch ll.Name {
-		case "browser":
-			if ll.Index != 2 {
-				t.Fatalf("Invalid lifeline index %s[%d]", ll.Name, ll.Index)
-			}
-		case "webserver":
-			if ll.Index != 0 {
-				t.Fatalf("Invalid lifeline index %s[%d]", ll.Name, ll.Index)
-			}
-		case "database":
-			if ll.Index != 1 {
-				t.Fatalf("Invalid lifeline index %s[%d]", ll.Name, ll.Index)
-			}
-		default:
-			t.Fatalf("Unknown lifeline %s", ll.Name)
-		}
-	}
+	checkLifeline(t, lls[0], 0, "webserver")
+	checkLifeline(t, lls[1], 1, "database")
+	checkLifeline(t, lls[2], 2, "browser")
+	checkLifeline(t, lls[3], 3, "foo")
+	checkLifeline(t, lls[4], 4, "bar")
+	checkLifeline(t, lls[5], 5, "baz")
+	checkLifeline(t, lls[6], 6, "qux")
 }
 
 const testDataMessage = `
