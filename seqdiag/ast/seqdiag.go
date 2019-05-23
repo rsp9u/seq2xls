@@ -251,3 +251,18 @@ func TrimQuote(attr Attr) string {
 	s := string(attr.(*token.Token).Lit)
 	return s[1 : len(s)-1]
 }
+
+/****************
+ * Interfaces
+ ****************/
+type ContainerStmt interface {
+	GetItems() []Stmt
+}
+
+func (s *FragmentStmt) GetItems() []Stmt {
+	return s.Stmts.Items
+}
+
+func (s *GroupStmt) GetItems() []Stmt {
+	return s.Stmts.Items
+}

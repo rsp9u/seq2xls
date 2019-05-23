@@ -27,16 +27,8 @@ func extractLifelinesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, index in
 
 	for _, stmt := range stmts {
 		switch v := stmt.(type) {
-		case *ast.FragmentStmt:
-			lls, indexPlus, err = extractLifelinesFromStmts(v.Stmts.Items, lls, index)
-			if err != nil {
-				return nil, 0, err
-			}
-			index += indexPlus
-			indexCnt += indexPlus
-
-		case *ast.GroupStmt:
-			lls, indexPlus, err = extractLifelinesFromStmts(v.Stmts.Items, lls, index)
+		case ast.ContainerStmt:
+			lls, indexPlus, err = extractLifelinesFromStmts(v.GetItems(), lls, index)
 			if err != nil {
 				return nil, 0, err
 			}
@@ -110,16 +102,8 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 
 	for _, stmt := range stmts {
 		switch v := stmt.(type) {
-		case *ast.FragmentStmt:
-			msgs, indexPlus, err = extractMessagesFromStmts(v.Stmts.Items, lls, msgs, index)
-			if err != nil {
-				return nil, 0, err
-			}
-			index += indexPlus
-			indexCnt += indexPlus
-
-		case *ast.GroupStmt:
-			msgs, indexPlus, err = extractMessagesFromStmts(v.Stmts.Items, lls, msgs, index)
+		case ast.ContainerStmt:
+			msgs, indexPlus, err = extractMessagesFromStmts(v.GetItems(), lls, msgs, index)
 			if err != nil {
 				return nil, 0, err
 			}
