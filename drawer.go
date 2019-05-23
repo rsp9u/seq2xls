@@ -53,18 +53,36 @@ func DrawMessages(ss *oxml.Spreadsheet, msgs []*model.Message) {
 	for _, msg := range msgs {
 		i := msg.Index
 		y := baseY + spanY*(i+1)
-		line := shape.NewLine()
-		line.SetStartPos(calcLifelineCenterX(msg.From), y)
-		line.SetEndPos(calcLifelineCenterX(msg.To), y)
-		switch msg.Type {
-		case model.Asynchronous:
-			line.SetTailType("arrow")
-		case model.Reply:
-			line.SetTailType("arrow")
-			line.SetDashType("dash")
-		default:
-			line.SetTailType("triangle")
+		if msg.Type != model.SelfReference {
+			line := shape.NewLine()
+			line.SetStartPos(calcLifelineCenterX(msg.From), y)
+			line.SetEndPos(calcLifelineCenterX(msg.To), y)
+			switch msg.Type {
+			case model.Asynchronous:
+				line.SetTailType("arrow")
+			case model.Reply:
+				line.SetTailType("arrow")
+				line.SetDashType("dash")
+			default:
+				line.SetTailType("triangle")
+			}
+			ss.AddShape(line)
+		} else {
+			w := spanX / 3
+			h := spanY / 3
+			line1 := shape.NewLine()
+			line2 := shape.NewLine()
+			line3 := shape.NewLine()
+			line1.SetStartPos(calcLifelineCenterX(msg.From), y)
+			line1.SetEndPos(calcLifelineCenterX(msg.From)+w, y)
+			line2.SetStartPos(calcLifelineCenterX(msg.From)+w, y)
+			line2.SetEndPos(calcLifelineCenterX(msg.From)+w, y+h)
+			line3.SetStartPos(calcLifelineCenterX(msg.From)+w, y+h)
+			line3.SetEndPos(calcLifelineCenterX(msg.From), y+h)
+			line3.SetTailType("triangle")
+			ss.AddShape(line1)
+			ss.AddShape(line2)
+			ss.AddShape(line3)
 		}
-		ss.AddShape(line)
 	}
 }
