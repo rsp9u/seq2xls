@@ -1,3 +1,5 @@
+bin
+*.diag
 seqdiag/errors
 seqdiag/lexer
 seqdiag/parser
