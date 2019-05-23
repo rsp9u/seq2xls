@@ -84,5 +84,21 @@ func DrawMessages(ss *oxml.Spreadsheet, msgs []*model.Message) {
 			ss.AddShape(line2)
 			ss.AddShape(line3)
 		}
+
+		if msg.Text != "" {
+			var c int
+			if msg.From.Index < msg.To.Index {
+				c = calcLifelineCenterX(msg.From)
+			} else {
+				c = calcLifelineCenterX(msg.To)
+			}
+			textbox := shape.NewRectangle()
+			textbox.SetNoFill(true)
+			textbox.SetNoLine(true)
+			textbox.SetText(msg.Text, "en-US")
+			textbox.SetLeftTop(c, y-20)
+			textbox.SetSize(spanX, spanY)
+			ss.AddShape(textbox)
+		}
 	}
 }
