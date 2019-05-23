@@ -112,6 +112,7 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 
 		case *ast.EdgeStmt:
 			tripReplySgmts := stack.New()
+			text := getMessageLabel(v)
 			for _, sgmt := range v.EdgeSegments.Items {
 				edgeType := getMessageType(sgmt)
 				msg := &model.Message{
@@ -120,6 +121,7 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 					To:       getLifeline(lls, getToNode(sgmt).Value),
 					Type:     edgeType,
 					ColorHex: "000000",
+					Text:     text,
 				}
 				msgs = append(msgs, msg)
 				index++
@@ -172,6 +174,15 @@ func getLifeline(lls []*model.Lifeline, name string) *model.Lifeline {
 		}
 	}
 	return nil
+}
+
+func getMessageLabel(stmt *ast.EdgeStmt) string {
+	for _, opt := range stmt.Options.Items {
+		if opt.Type.String() == "label" {
+			return opt.Value.String()
+		}
+	}
+	return ""
 }
 
 func getFromNode(sgmt *ast.EdgeSegment) *ast.ID {

@@ -15,7 +15,7 @@ seqdiag {
     foo; bar;
   }
   loop {
-    baz; qux; 
+    baz => qux; 
   }
 }
 `
@@ -77,6 +77,17 @@ seqdiag {
 	}
   }
   foo => foo;
+}
+`
+
+const testDataMessageLabel = `
+seqdiag {
+  browser  -> web [label = "GET /options"];
+  browser <-- web [label = "option list"];
+  browser => web => db [label = "pass-through"];
+  browser -> web [label = "POST /objects"] {
+    web -> db [label = "INSERT INTO objects"];
+  }
 }
 `
 
@@ -150,4 +161,31 @@ func TestExtractMessagesTrip(t *testing.T) {
 	checkMessage(t, msgs[11], 11, "baz", "bar", model.Reply)
 	checkMessage(t, msgs[12], 12, "bar", "foo", model.Reply)
 	checkMessage(t, msgs[13], 13, "foo", "foo", model.SelfReference)
+}
+
+func checkMessageLabel(t *testing.T, msg *model.Message, label string) {
+	if msg.Text != label {
+		t.Fatalf("Mismatches label of message [expect: %s, actual: %s]", label, msg.Text)
+	}
+}
+
+func TestExtractMessagesLabel(t *testing.T) {
+	d := ParseSeqdiag([]byte(testDataMessageLabel))
+	lls, err := ExtractLifelines(d)
+	if err != nil {
+		t.Fatalf("Extract error %v", err)
+	}
+	msgs, err := ExtractMessages(d, lls)
+	if err != nil {
+		t.Fatalf("Extract error %v", err)
+	}
+
+	checkMessageLabel(t, msgs[0], "GET /options")
+	checkMessageLabel(t, msgs[1], "option list")
+	checkMessageLabel(t, msgs[2], "pass-through")
+	checkMessageLabel(t, msgs[3], "pass-through")
+	checkMessageLabel(t, msgs[4], "")
+	checkMessageLabel(t, msgs[5], "")
+	checkMessageLabel(t, msgs[6], "POST /objects")
+	checkMessageLabel(t, msgs[7], "INSERT INTO objects")
 }

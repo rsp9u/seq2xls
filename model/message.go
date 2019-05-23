@@ -17,4 +17,5 @@ type Message struct {
 	To       *Lifeline
 	Type     MessageType
 	ColorHex string
+	Text     string
 }

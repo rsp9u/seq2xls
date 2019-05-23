@@ -243,6 +243,10 @@ func NewEmptyID() *ID {
 	return &ID{}
 }
 
+func (id *ID) String() string {
+	return id.Value
+}
+
 func TokenToString(attr Attr) string {
 	return string(attr.(*token.Token).Lit)
 }
