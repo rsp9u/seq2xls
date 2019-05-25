@@ -29,12 +29,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	msgs, err := seqdiag.ExtractMessages(d, lls)
+	msgs, notes, err := seqdiag.ExtractMessages(d, lls)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	seq2xls.DrawLifelines(ss, lls, len(msgs))
 	seq2xls.DrawMessages(ss, msgs)
+	seq2xls.DrawNotes(ss, notes)
 	ss.Dump("example1.xlsx")
 }

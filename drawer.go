@@ -1,6 +1,8 @@
 package seq2xls
 
 import (
+	"strings"
+
 	"github.com/rsp9u/go-xlsshape/oxml"
 	"github.com/rsp9u/go-xlsshape/oxml/shape"
 	"github.com/rsp9u/seq2xls/model"
@@ -101,4 +103,36 @@ func DrawMessages(ss *oxml.Spreadsheet, msgs []*model.Message) {
 			ss.AddShape(textbox)
 		}
 	}
+}
+
+// DrawNotes adds 'Note' into the spreadsheet.
+func DrawNotes(ss *oxml.Spreadsheet, notes []*model.Note) {
+	baseY := marginY + sizeY
+	for _, note := range notes {
+		i := note.Assoc.Index
+		y := baseY + spanY*(i+1)
+		w := maxLine(note.Text) * 8
+		h := (len(strings.Split(note.Text, "\n"))+1)*15 + 8
+
+		rect := shape.NewRectangle()
+		rect.SetSize(w, h)
+		rect.SetText(note.Text, "en-US")
+		rect.SetFillColor(note.ColorHex)
+		if note.OnLeft {
+			rect.SetLeftTop(calcLifelineCenterX(note.Assoc.From)-12-w, y)
+		} else {
+			rect.SetLeftTop(calcLifelineCenterX(note.Assoc.To)+12, y)
+		}
+		ss.AddShape(rect)
+	}
+}
+
+func maxLine(text string) int {
+	max := 0
+	for _, line := range strings.Split(text, "\n") {
+		if len(line) > max {
+			max = len(line)
+		}
+	}
+	return max
 }
