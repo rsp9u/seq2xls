@@ -91,6 +91,17 @@ seqdiag {
 }
 `
 
+const testDataMessageNote = `
+seqdiag {
+  foo  -> bar [note = "Note"];
+  foo <-- bar [leftnote = "LeftNote"];
+  foo => bar [note = "Note on Trip Message"];
+  foo -> bar [leftnote  = "Each side notes: Left",
+              rightnote = "Each side notes: Right"];
+  foo -> bar -> baz [note = "Note on Chained Messages"];
+}
+`
+
 func checkMessage(t *testing.T, msg *model.Message, idx int, from, to string, msgType model.MessageType) {
 	if msg.Index != idx {
 		t.Fatalf("Mismatches index of message [expect: %d, actual: %d]", idx, msg.Index)
@@ -112,7 +123,7 @@ func TestExtractMessages(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
-	msgs, err := ExtractMessages(d, lls)
+	msgs, _, err := ExtractMessages(d, lls)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
@@ -138,7 +149,7 @@ func TestExtractMessagesTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
-	msgs, err := ExtractMessages(d, lls)
+	msgs, _, err := ExtractMessages(d, lls)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
@@ -175,7 +186,7 @@ func TestExtractMessagesLabel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
-	msgs, err := ExtractMessages(d, lls)
+	msgs, _, err := ExtractMessages(d, lls)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
@@ -188,4 +199,36 @@ func TestExtractMessagesLabel(t *testing.T) {
 	checkMessageLabel(t, msgs[5], "")
 	checkMessageLabel(t, msgs[6], "POST /objects")
 	checkMessageLabel(t, msgs[7], "INSERT INTO objects")
+}
+
+func checkNote(t *testing.T, note *model.Note, idx int, onLeft bool, text string) {
+	if note.Assoc.Index != idx {
+		t.Fatalf("Mismatches index of message associated note [expect: %d, actual: %d]", idx, note.Assoc.Index)
+	}
+	if note.OnLeft != onLeft {
+		t.Fatalf("Invalid side [expect: onleft=%v, actual: onleft=%v]", onLeft, note.OnLeft)
+	}
+	if note.Text != text {
+		t.Fatalf("Mismatches note text [expect: %s, actual: %s]", text, note.Text)
+	}
+}
+
+func TestExtractMessagesNote(t *testing.T) {
+	d := ParseSeqdiag([]byte(testDataMessageNote))
+	lls, err := ExtractLifelines(d)
+	if err != nil {
+		t.Fatalf("Extract error %v", err)
+	}
+	_, notes, err := ExtractMessages(d, lls)
+	if err != nil {
+		t.Fatalf("Extract error %v", err)
+	}
+
+	checkNote(t, notes[0], 0, false, "Note")
+	checkNote(t, notes[1], 1, true, "LeftNote")
+	checkNote(t, notes[2], 2, false, "Note on Trip Message")
+	checkNote(t, notes[3], 4, true, "Each side notes: Left")
+	checkNote(t, notes[4], 4, false, "Each side notes: Right")
+	checkNote(t, notes[5], 5, false, "Note on Chained Messages")
+	checkNote(t, notes[6], 6, false, "Note on Chained Messages")
 }

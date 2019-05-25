@@ -84,16 +84,17 @@ func containsLifeline(lls []*model.Lifeline, name string) bool {
 }
 
 // ExtractMessages extracts message elements from the diagram.
-func ExtractMessages(d *ast.Diagram, lls []*model.Lifeline) ([]*model.Message, error) {
+func ExtractMessages(d *ast.Diagram, lls []*model.Lifeline) ([]*model.Message, []*model.Note, error) {
 	msgs := []*model.Message{}
-	msgs, _, err := extractMessagesFromStmts(d.Stmts.Items, lls, msgs, 0)
+	notes := []*model.Note{}
+	msgs, notes, _, err := extractMessagesFromStmts(d.Stmts.Items, lls, msgs, notes, 0)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return msgs, nil
+	return msgs, notes, nil
 }
 
-func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*model.Message, index int) ([]*model.Message, int, error) {
+func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*model.Message, notes []*model.Note, index int) ([]*model.Message, []*model.Note, int, error) {
 	var (
 		indexCnt, indexPlus int
 		err                 error
@@ -103,9 +104,9 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 	for _, stmt := range stmts {
 		switch v := stmt.(type) {
 		case ast.ContainerStmt:
-			msgs, indexPlus, err = extractMessagesFromStmts(v.GetItems(), lls, msgs, index)
+			msgs, notes, indexPlus, err = extractMessagesFromStmts(v.GetItems(), lls, msgs, notes, index)
 			if err != nil {
-				return nil, 0, err
+				return nil, nil, 0, err
 			}
 			index += indexPlus
 			indexCnt += indexPlus
@@ -113,6 +114,9 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 		case *ast.EdgeStmt:
 			tripReplySgmts := stack.New()
 			text := getMessageLabel(v)
+			lnote := getMessageLeftNote(v)
+			rnote := getMessageRightNote(v)
+
 			for _, sgmt := range v.EdgeSegments.Items {
 				edgeType := getMessageType(sgmt)
 				msg := &model.Message{
@@ -134,12 +138,29 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 						Edge:      "<-",
 					})
 				}
+
+				if lnote != nil {
+					notes = append(notes, &model.Note{
+						Assoc:    msg,
+						OnLeft:   lnote.OnLeft,
+						Text:     lnote.Text,
+						ColorHex: lnote.ColorHex,
+					})
+				}
+				if rnote != nil {
+					notes = append(notes, &model.Note{
+						Assoc:    msg,
+						OnLeft:   rnote.OnLeft,
+						Text:     rnote.Text,
+						ColorHex: rnote.ColorHex,
+					})
+				}
 			}
 
 			if v.EdgeBlock != nil {
-				msgs, indexPlus, err = extractMessagesFromStmts(v.EdgeBlock.Items, lls, msgs, index)
+				msgs, notes, indexPlus, err = extractMessagesFromStmts(v.EdgeBlock.Items, lls, msgs, notes, index)
 				if err != nil {
-					return nil, 0, err
+					return nil, nil, 0, err
 				}
 				index += indexPlus
 				indexCnt += indexPlus
@@ -164,7 +185,7 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 		}
 	}
 
-	return msgs, indexCnt, nil
+	return msgs, notes, indexCnt, nil
 }
 
 func getLifeline(lls []*model.Lifeline, name string) *model.Lifeline {
@@ -183,6 +204,34 @@ func getMessageLabel(stmt *ast.EdgeStmt) string {
 		}
 	}
 	return ""
+}
+
+func getMessageLeftNote(stmt *ast.EdgeStmt) *model.Note {
+	for _, opt := range stmt.Options.Items {
+		if opt.Type.String() == "leftnote" {
+			return &model.Note{
+				Assoc:    nil,
+				OnLeft:   true,
+				Text:     opt.Value.String(),
+				ColorHex: "ffb6c1",
+			}
+		}
+	}
+	return nil
+}
+
+func getMessageRightNote(stmt *ast.EdgeStmt) *model.Note {
+	for _, opt := range stmt.Options.Items {
+		if opt.Type.String() == "note" || opt.Type.String() == "rightnote" {
+			return &model.Note{
+				Assoc:    nil,
+				OnLeft:   false,
+				Text:     opt.Value.String(),
+				ColorHex: "ffb6c1",
+			}
+		}
+	}
+	return nil
 }
 
 func getFromNode(sgmt *ast.EdgeSegment) *ast.ID {
