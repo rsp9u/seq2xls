@@ -233,7 +233,7 @@ type ID struct {
 func NewID(id, t Attr) (*ID, error) {
 	switch t.(string) {
 	case "string":
-		return &ID{TrimQuote(id)}, nil
+		return &ID{Unescape(TrimQuote(id))}, nil
 	default:
 		return &ID{TokenToString(id)}, nil
 	}
@@ -254,6 +254,13 @@ func TokenToString(attr Attr) string {
 func TrimQuote(attr Attr) string {
 	s := string(attr.(*token.Token).Lit)
 	return s[1 : len(s)-1]
+}
+
+func Unescape(s string) string {
+	s = strings.Replace(s, "\\n", "\n", -1)
+	s = strings.Replace(s, "\\r", "\r", -1)
+	s = strings.Replace(s, "\\t", "\t", -1)
+	return s
 }
 
 /****************
