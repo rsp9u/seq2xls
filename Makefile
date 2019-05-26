@@ -1,3 +1,9 @@
+ifeq ($(GOOS), windows)
+	BINARY = bin/seq2xls.exe
+else
+	BINARY = bin/seq2xls
+endif
+
 .PHONY: all
 all: seq2xls
 
@@ -11,7 +17,7 @@ test: seqdiag
 	cd ..
 
 seq2xls: seqdiag *.go cmd/main.go
-	go build -o bin/seq2xls cmd/main.go
+	go build -o $(BINARY) cmd/main.go
 
 .PHONY: seqdiag
 seqdiag: gocc
