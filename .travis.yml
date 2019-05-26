@@ -4,4 +4,4 @@ go:
 install:
   - make seqdiag
 script:
-  - make test
+  - GO111MODULE=on make test
