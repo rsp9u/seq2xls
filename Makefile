@@ -9,12 +9,7 @@ all: seq2xls
 
 .PHONY: test
 test: seqdiag
-	cd seqdiag/test ; \
-	go test -v ; \
-	cd ../..
-	cd seqdiag ; \
-	go test -v ; \
-	cd ..
+	go test -v github.com/rsp9u/seq2xls/seqdiag github.com/rsp9u/seq2xls/seqdiag/test
 
 seq2xls: seqdiag *.go cmd/main.go
 	go build -o $(BINARY) cmd/main.go
