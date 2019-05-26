@@ -5,12 +5,18 @@ seq2xls
 
 # Description
 
-`seq2xls` converts
+`seq2xls` converts from `*.diag`(seqdiag) to `*.xlsx`.
 
-* From
-  - [ ] seqdiag(WIP)
-  - [ ] plantuml
-  - [ ] mermaid
+# Usage (Linux)
 
-* To
-  - .xls
+```
+$ curl -Lo seq2xls https://github.com/rsp9u/seq2xls/releases/latest/download/seq2xls
+$ chmod +x seq2xls
+$ ./seq2xls -i simple.diag -o simple.xlsx
+```
+
+# Usage (Windows)
+
+1. Download Windows binary from [here](https://github.com/rsp9u/seq2xls/releases/latest/download/seq2xls.exe)
+2. Drag&Drop "*.diag" files
+
