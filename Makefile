@@ -28,7 +28,7 @@ seqdiag: gocc
 
 .PHONY: clean
 clean:
-	rm -f seq2xls
+	rm -rf bin
 	rm -rf seqdiag/errors seqdiag/lexer seqdiag/parser seqdiag/token seqdiag/util
 
 .PHONY: gocc
