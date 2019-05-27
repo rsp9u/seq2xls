@@ -11,31 +11,24 @@ import (
 // ScanTimeline extracts all time series elements from the diagram AST and puts them into the given diagram model.
 func ScanTimeline(d *ast.Diagram, seq *model.SequenceDiagram) error {
 	seq.Messages = []*model.Message{}
+	seq.Fragments = []*model.Fragment{}
 	seq.Notes = []*model.Note{}
 
-	_, err := scanTimelineFromStmts(d.Stmts.Items, seq, 0)
+	err := scanTimelineInStmts(d.Stmts.Items, seq)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func scanTimelineFromStmts(stmts []ast.Stmt, seq *model.SequenceDiagram, index int) (int, error) {
-	var (
-		indexCnt, indexPlus int
-		err                 error
-	)
-	indexCnt = 0
-
+func scanTimelineInStmts(stmts []ast.Stmt, seq *model.SequenceDiagram) error {
 	for _, stmt := range stmts {
 		switch v := stmt.(type) {
 		case ast.ContainerStmt:
-			indexPlus, err = scanTimelineFromStmts(v.GetItems(), seq, index)
+			err := scanTimelineInStmts(v.GetItems(), seq)
 			if err != nil {
-				return 0, err
+				return err
 			}
-			index += indexPlus
-			indexCnt += indexPlus
 
 		case *ast.EdgeStmt:
 			tripReplySgmts := stack.New()
@@ -46,7 +39,7 @@ func scanTimelineFromStmts(stmts []ast.Stmt, seq *model.SequenceDiagram, index i
 			for _, sgmt := range v.EdgeSegments.Items {
 				edgeType := getMessageType(sgmt)
 				msg := &model.Message{
-					Index:    index,
+					Index:    len(seq.Messages),
 					From:     getLifeline(seq.Lifelines, getFromNode(sgmt).Value),
 					To:       getLifeline(seq.Lifelines, getToNode(sgmt).Value),
 					Type:     edgeType,
@@ -54,8 +47,6 @@ func scanTimelineFromStmts(stmts []ast.Stmt, seq *model.SequenceDiagram, index i
 					Text:     text,
 				}
 				seq.Messages = append(seq.Messages, msg)
-				index++
-				indexCnt++
 
 				if edgeType != model.SelfReference && isTripMessage(sgmt) {
 					tripReplySgmts.Push(&ast.EdgeSegment{
@@ -84,12 +75,10 @@ func scanTimelineFromStmts(stmts []ast.Stmt, seq *model.SequenceDiagram, index i
 			}
 
 			if v.EdgeBlock != nil {
-				indexPlus, err = scanTimelineFromStmts(v.EdgeBlock.Items, seq, index)
+				err := scanTimelineInStmts(v.EdgeBlock.Items, seq)
 				if err != nil {
-					return 0, err
+					return err
 				}
-				index += indexPlus
-				indexCnt += indexPlus
 			}
 
 			for tripReplySgmts.Len() != 0 {
@@ -97,21 +86,19 @@ func scanTimelineFromStmts(stmts []ast.Stmt, seq *model.SequenceDiagram, index i
 				sgmt, ok := s.(*ast.EdgeSegment)
 				if ok {
 					msg := &model.Message{
-						Index:    index,
+						Index:    len(seq.Messages),
 						From:     getLifeline(seq.Lifelines, getFromNode(sgmt).Value),
 						To:       getLifeline(seq.Lifelines, getToNode(sgmt).Value),
 						Type:     getMessageType(sgmt),
 						ColorHex: "000000",
 					}
 					seq.Messages = append(seq.Messages, msg)
-					index++
-					indexCnt++
 				}
 			}
 		}
 	}
 
-	return indexCnt, nil
+	return nil
 }
 
 func getLifeline(lls []*model.Lifeline, name string) *model.Lifeline {

@@ -17,7 +17,7 @@ const (
 )
 
 type Fragment struct {
+	Index      int
 	Begin, End *Message
-	Contain    []*Lifeline
 	Type       FragmentType
 }
