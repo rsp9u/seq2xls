@@ -1,4 +1,4 @@
-package seqdiag
+package extract
 
 import (
 	"testing"
