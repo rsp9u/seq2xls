@@ -5,4 +5,5 @@ type SequenceDiagram struct {
 	ExecSpecs []*ExecSpec
 	Messages  []*Message
 	Fragments []*Fragment
+	Notes     []*Note
 }
