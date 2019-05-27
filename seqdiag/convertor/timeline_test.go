@@ -60,6 +60,22 @@ seqdiag {
 }
 `
 
+func parseDiagram(t *testing.T, testData string) *model.SequenceDiagram {
+	d := seqdiag.ParseSeqdiag([]byte(testData))
+	lls, err := ExtractLifelines(d)
+	if err != nil {
+		t.Fatalf("Extract error %v", err)
+	}
+
+	seq := &model.SequenceDiagram{Lifelines: lls}
+	err = ScanTimeline(d, seq)
+	if err != nil {
+		t.Fatalf("Extract error %v", err)
+	}
+
+	return seq
+}
+
 func checkMessage(t *testing.T, msg *model.Message, idx int, from, to string, msgType model.MessageType) {
 	if msg.Index != idx {
 		t.Fatalf("Mismatches index of message [expect: %d, actual: %d]", idx, msg.Index)
@@ -76,16 +92,7 @@ func checkMessage(t *testing.T, msg *model.Message, idx int, from, to string, ms
 }
 
 func TestExtractMessages(t *testing.T) {
-	d := seqdiag.ParseSeqdiag([]byte(testDataMessage))
-	lls, err := ExtractLifelines(d)
-	if err != nil {
-		t.Fatalf("Extract error %v", err)
-	}
-	seq := &model.SequenceDiagram{Lifelines: lls}
-	err = ScanTimeline(d, seq)
-	if err != nil {
-		t.Fatalf("Extract error %v", err)
-	}
+	seq := parseDiagram(t, testDataMessage)
 
 	if len(seq.Messages) != 9 {
 		t.Fatalf("Too many or few messages %d", len(seq.Messages))
@@ -103,16 +110,7 @@ func TestExtractMessages(t *testing.T) {
 }
 
 func TestExtractMessagesTrip(t *testing.T) {
-	d := seqdiag.ParseSeqdiag([]byte(testDataMessageTrip))
-	lls, err := ExtractLifelines(d)
-	if err != nil {
-		t.Fatalf("Extract error %v", err)
-	}
-	seq := &model.SequenceDiagram{Lifelines: lls}
-	err = ScanTimeline(d, seq)
-	if err != nil {
-		t.Fatalf("Extract error %v", err)
-	}
+	seq := parseDiagram(t, testDataMessageTrip)
 
 	if len(seq.Messages) != 14 {
 		t.Fatalf("Too many or few messages %d", len(seq.Messages))
@@ -141,16 +139,7 @@ func checkMessageLabel(t *testing.T, msg *model.Message, label string) {
 }
 
 func TestExtractMessagesLabel(t *testing.T) {
-	d := seqdiag.ParseSeqdiag([]byte(testDataMessageLabel))
-	lls, err := ExtractLifelines(d)
-	if err != nil {
-		t.Fatalf("Extract error %v", err)
-	}
-	seq := &model.SequenceDiagram{Lifelines: lls}
-	err = ScanTimeline(d, seq)
-	if err != nil {
-		t.Fatalf("Extract error %v", err)
-	}
+	seq := parseDiagram(t, testDataMessageLabel)
 
 	checkMessageLabel(t, seq.Messages[0], "GET /options")
 	checkMessageLabel(t, seq.Messages[1], "option list")
@@ -175,16 +164,7 @@ func checkNote(t *testing.T, note *model.Note, idx int, onLeft bool, text string
 }
 
 func TestExtractMessagesNote(t *testing.T) {
-	d := seqdiag.ParseSeqdiag([]byte(testDataMessageNote))
-	lls, err := ExtractLifelines(d)
-	if err != nil {
-		t.Fatalf("Extract error %v", err)
-	}
-	seq := &model.SequenceDiagram{Lifelines: lls}
-	err = ScanTimeline(d, seq)
-	if err != nil {
-		t.Fatalf("Extract error %v", err)
-	}
+	seq := parseDiagram(t, testDataMessageNote)
 
 	checkNote(t, seq.Notes[0], 0, false, "Note")
 	checkNote(t, seq.Notes[1], 1, true, "LeftNote")
