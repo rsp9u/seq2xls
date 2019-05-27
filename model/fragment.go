@@ -14,6 +14,7 @@ const (
 	Neg
 	Ignore
 	Consider
+	UnknownFragment
 )
 
 type Fragment struct {

@@ -1,6 +1,7 @@
 package convertor
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/golang-collections/collections/stack"
@@ -24,7 +25,27 @@ func ScanTimeline(d *ast.Diagram, seq *model.SequenceDiagram) error {
 func scanTimelineInStmts(stmts []ast.Stmt, seq *model.SequenceDiagram) error {
 	for _, stmt := range stmts {
 		switch v := stmt.(type) {
-		case ast.ContainerStmt:
+		case *ast.FragmentStmt:
+			frag := &model.Fragment{
+				Index: len(seq.Fragments),
+				Type:  getFragmentType(v),
+			}
+			seq.Fragments = append(seq.Fragments, frag)
+
+			beginIndex := len(seq.Messages)
+			err := scanTimelineInStmts(v.GetItems(), seq)
+			endIndex := len(seq.Messages) - 1
+			if err != nil {
+				return err
+			}
+			if endIndex < beginIndex {
+				return fmt.Errorf("empty fragment is not allowed")
+			}
+
+			frag.Begin = seq.Messages[beginIndex]
+			frag.End = seq.Messages[endIndex]
+
+		case *ast.GroupStmt:
 			err := scanTimelineInStmts(v.GetItems(), seq)
 			if err != nil {
 				return err
@@ -179,4 +200,15 @@ func getMessageType(sgmt *ast.EdgeSegment) model.MessageType {
 
 func isTripMessage(sgmt *ast.EdgeSegment) bool {
 	return sgmt.Edge == "=>"
+}
+
+func getFragmentType(stmt *ast.FragmentStmt) model.FragmentType {
+	switch stmt.Type {
+	case "loop":
+		return model.Loop
+	case "alt":
+		return model.Alt
+	default:
+		return model.UnknownFragment
+	}
 }
