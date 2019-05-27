@@ -7,19 +7,18 @@ import (
 
 // AstToModel converts from the sequence diagram AST of 'seqdiag' to the drawable model.
 func AstToModel(d *ast.Diagram) (*model.SequenceDiagram, error) {
+	seq := &model.SequenceDiagram{}
+
 	lls, err := ExtractLifelines(d)
 	if err != nil {
 		return nil, err
 	}
+	seq.Lifelines = lls
 
-	msgs, notes, err := ExtractMessages(d, lls)
+	err = ScanTimeline(d, seq)
 	if err != nil {
 		return nil, err
 	}
 
-	return &model.SequenceDiagram{
-		Lifelines: lls,
-		Messages:  msgs,
-		Notes:     notes,
-	}, nil
+	return seq, nil
 }

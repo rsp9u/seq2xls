@@ -81,24 +81,25 @@ func TestExtractMessages(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
-	msgs, _, err := ExtractMessages(d, lls)
+	seq := &model.SequenceDiagram{Lifelines: lls}
+	err = ScanTimeline(d, seq)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
 
-	if len(msgs) != 9 {
-		t.Fatalf("Too many or few messages %d", len(msgs))
+	if len(seq.Messages) != 9 {
+		t.Fatalf("Too many or few messages %d", len(seq.Messages))
 	}
 
-	checkMessage(t, msgs[0], 0, "foo", "bar", model.Synchronous)
-	checkMessage(t, msgs[1], 1, "bar", "foo", model.Reply)
-	checkMessage(t, msgs[2], 2, "foo", "bar", model.Asynchronous)
-	checkMessage(t, msgs[3], 3, "bar", "baz", model.Asynchronous)
-	checkMessage(t, msgs[4], 4, "foo", "bar", model.Synchronous)
-	checkMessage(t, msgs[5], 5, "bar", "foo", model.Reply)
-	checkMessage(t, msgs[6], 6, "foo", "bar", model.Synchronous)
-	checkMessage(t, msgs[7], 7, "baz", "qux", model.Synchronous)
-	checkMessage(t, msgs[8], 8, "foo", "foo", model.SelfReference)
+	checkMessage(t, seq.Messages[0], 0, "foo", "bar", model.Synchronous)
+	checkMessage(t, seq.Messages[1], 1, "bar", "foo", model.Reply)
+	checkMessage(t, seq.Messages[2], 2, "foo", "bar", model.Asynchronous)
+	checkMessage(t, seq.Messages[3], 3, "bar", "baz", model.Asynchronous)
+	checkMessage(t, seq.Messages[4], 4, "foo", "bar", model.Synchronous)
+	checkMessage(t, seq.Messages[5], 5, "bar", "foo", model.Reply)
+	checkMessage(t, seq.Messages[6], 6, "foo", "bar", model.Synchronous)
+	checkMessage(t, seq.Messages[7], 7, "baz", "qux", model.Synchronous)
+	checkMessage(t, seq.Messages[8], 8, "foo", "foo", model.SelfReference)
 }
 
 func TestExtractMessagesTrip(t *testing.T) {
@@ -107,29 +108,30 @@ func TestExtractMessagesTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
-	msgs, _, err := ExtractMessages(d, lls)
+	seq := &model.SequenceDiagram{Lifelines: lls}
+	err = ScanTimeline(d, seq)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
 
-	if len(msgs) != 14 {
-		t.Fatalf("Too many or few messages %d", len(msgs))
+	if len(seq.Messages) != 14 {
+		t.Fatalf("Too many or few messages %d", len(seq.Messages))
 	}
 
-	checkMessage(t, msgs[0], 0, "foo", "bar", model.Synchronous)
-	checkMessage(t, msgs[1], 1, "bar", "foo", model.Reply)
-	checkMessage(t, msgs[2], 2, "bar", "baz", model.Synchronous)
-	checkMessage(t, msgs[3], 3, "baz", "qux", model.Asynchronous)
-	checkMessage(t, msgs[4], 4, "qux", "quux", model.Synchronous)
-	checkMessage(t, msgs[5], 5, "quux", "qux", model.Reply)
-	checkMessage(t, msgs[6], 6, "baz", "bar", model.Reply)
-	checkMessage(t, msgs[7], 7, "foo", "bar", model.Synchronous)
-	checkMessage(t, msgs[8], 8, "bar", "baz", model.Synchronous)
-	checkMessage(t, msgs[9], 9, "baz", "qux", model.Synchronous)
-	checkMessage(t, msgs[10], 10, "qux", "baz", model.Reply)
-	checkMessage(t, msgs[11], 11, "baz", "bar", model.Reply)
-	checkMessage(t, msgs[12], 12, "bar", "foo", model.Reply)
-	checkMessage(t, msgs[13], 13, "foo", "foo", model.SelfReference)
+	checkMessage(t, seq.Messages[0], 0, "foo", "bar", model.Synchronous)
+	checkMessage(t, seq.Messages[1], 1, "bar", "foo", model.Reply)
+	checkMessage(t, seq.Messages[2], 2, "bar", "baz", model.Synchronous)
+	checkMessage(t, seq.Messages[3], 3, "baz", "qux", model.Asynchronous)
+	checkMessage(t, seq.Messages[4], 4, "qux", "quux", model.Synchronous)
+	checkMessage(t, seq.Messages[5], 5, "quux", "qux", model.Reply)
+	checkMessage(t, seq.Messages[6], 6, "baz", "bar", model.Reply)
+	checkMessage(t, seq.Messages[7], 7, "foo", "bar", model.Synchronous)
+	checkMessage(t, seq.Messages[8], 8, "bar", "baz", model.Synchronous)
+	checkMessage(t, seq.Messages[9], 9, "baz", "qux", model.Synchronous)
+	checkMessage(t, seq.Messages[10], 10, "qux", "baz", model.Reply)
+	checkMessage(t, seq.Messages[11], 11, "baz", "bar", model.Reply)
+	checkMessage(t, seq.Messages[12], 12, "bar", "foo", model.Reply)
+	checkMessage(t, seq.Messages[13], 13, "foo", "foo", model.SelfReference)
 }
 
 func checkMessageLabel(t *testing.T, msg *model.Message, label string) {
@@ -144,19 +146,20 @@ func TestExtractMessagesLabel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
-	msgs, _, err := ExtractMessages(d, lls)
+	seq := &model.SequenceDiagram{Lifelines: lls}
+	err = ScanTimeline(d, seq)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
 
-	checkMessageLabel(t, msgs[0], "GET /options")
-	checkMessageLabel(t, msgs[1], "option list")
-	checkMessageLabel(t, msgs[2], "pass-through")
-	checkMessageLabel(t, msgs[3], "pass-through")
-	checkMessageLabel(t, msgs[4], "")
-	checkMessageLabel(t, msgs[5], "")
-	checkMessageLabel(t, msgs[6], "POST /objects")
-	checkMessageLabel(t, msgs[7], "INSERT INTO objects")
+	checkMessageLabel(t, seq.Messages[0], "GET /options")
+	checkMessageLabel(t, seq.Messages[1], "option list")
+	checkMessageLabel(t, seq.Messages[2], "pass-through")
+	checkMessageLabel(t, seq.Messages[3], "pass-through")
+	checkMessageLabel(t, seq.Messages[4], "")
+	checkMessageLabel(t, seq.Messages[5], "")
+	checkMessageLabel(t, seq.Messages[6], "POST /objects")
+	checkMessageLabel(t, seq.Messages[7], "INSERT INTO objects")
 }
 
 func checkNote(t *testing.T, note *model.Note, idx int, onLeft bool, text string) {
@@ -177,16 +180,17 @@ func TestExtractMessagesNote(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
-	_, notes, err := ExtractMessages(d, lls)
+	seq := &model.SequenceDiagram{Lifelines: lls}
+	err = ScanTimeline(d, seq)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
 	}
 
-	checkNote(t, notes[0], 0, false, "Note")
-	checkNote(t, notes[1], 1, true, "LeftNote")
-	checkNote(t, notes[2], 2, false, "Note on Trip Message")
-	checkNote(t, notes[3], 4, true, "Each side notes: Left")
-	checkNote(t, notes[4], 4, false, "Each side notes: Right")
-	checkNote(t, notes[5], 5, false, "Note on Chained Messages")
-	checkNote(t, notes[6], 6, false, "Note on Chained Messages")
+	checkNote(t, seq.Notes[0], 0, false, "Note")
+	checkNote(t, seq.Notes[1], 1, true, "LeftNote")
+	checkNote(t, seq.Notes[2], 2, false, "Note on Trip Message")
+	checkNote(t, seq.Notes[3], 4, true, "Each side notes: Left")
+	checkNote(t, seq.Notes[4], 4, false, "Each side notes: Right")
+	checkNote(t, seq.Notes[5], 5, false, "Note on Chained Messages")
+	checkNote(t, seq.Notes[6], 6, false, "Note on Chained Messages")
 }

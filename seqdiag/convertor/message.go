@@ -8,18 +8,19 @@ import (
 	"github.com/rsp9u/seq2xls/seqdiag/ast"
 )
 
-// ExtractMessages extracts message elements from the diagram.
-func ExtractMessages(d *ast.Diagram, lls []*model.Lifeline) ([]*model.Message, []*model.Note, error) {
-	msgs := []*model.Message{}
-	notes := []*model.Note{}
-	msgs, notes, _, err := extractMessagesFromStmts(d.Stmts.Items, lls, msgs, notes, 0)
+// ScanTimeline extracts all time series elements from the diagram AST and puts them into the given diagram model.
+func ScanTimeline(d *ast.Diagram, seq *model.SequenceDiagram) error {
+	seq.Messages = []*model.Message{}
+	seq.Notes = []*model.Note{}
+
+	_, err := scanTimelineFromStmts(d.Stmts.Items, seq, 0)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
-	return msgs, notes, nil
+	return nil
 }
 
-func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*model.Message, notes []*model.Note, index int) ([]*model.Message, []*model.Note, int, error) {
+func scanTimelineFromStmts(stmts []ast.Stmt, seq *model.SequenceDiagram, index int) (int, error) {
 	var (
 		indexCnt, indexPlus int
 		err                 error
@@ -29,9 +30,9 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 	for _, stmt := range stmts {
 		switch v := stmt.(type) {
 		case ast.ContainerStmt:
-			msgs, notes, indexPlus, err = extractMessagesFromStmts(v.GetItems(), lls, msgs, notes, index)
+			indexPlus, err = scanTimelineFromStmts(v.GetItems(), seq, index)
 			if err != nil {
-				return nil, nil, 0, err
+				return 0, err
 			}
 			index += indexPlus
 			indexCnt += indexPlus
@@ -46,13 +47,13 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 				edgeType := getMessageType(sgmt)
 				msg := &model.Message{
 					Index:    index,
-					From:     getLifeline(lls, getFromNode(sgmt).Value),
-					To:       getLifeline(lls, getToNode(sgmt).Value),
+					From:     getLifeline(seq.Lifelines, getFromNode(sgmt).Value),
+					To:       getLifeline(seq.Lifelines, getToNode(sgmt).Value),
 					Type:     edgeType,
 					ColorHex: "000000",
 					Text:     text,
 				}
-				msgs = append(msgs, msg)
+				seq.Messages = append(seq.Messages, msg)
 				index++
 				indexCnt++
 
@@ -65,7 +66,7 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 				}
 
 				if lnote != nil {
-					notes = append(notes, &model.Note{
+					seq.Notes = append(seq.Notes, &model.Note{
 						Assoc:    msg,
 						OnLeft:   lnote.OnLeft,
 						Text:     lnote.Text,
@@ -73,7 +74,7 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 					})
 				}
 				if rnote != nil {
-					notes = append(notes, &model.Note{
+					seq.Notes = append(seq.Notes, &model.Note{
 						Assoc:    msg,
 						OnLeft:   rnote.OnLeft,
 						Text:     rnote.Text,
@@ -83,9 +84,9 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 			}
 
 			if v.EdgeBlock != nil {
-				msgs, notes, indexPlus, err = extractMessagesFromStmts(v.EdgeBlock.Items, lls, msgs, notes, index)
+				indexPlus, err = scanTimelineFromStmts(v.EdgeBlock.Items, seq, index)
 				if err != nil {
-					return nil, nil, 0, err
+					return 0, err
 				}
 				index += indexPlus
 				indexCnt += indexPlus
@@ -97,12 +98,12 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 				if ok {
 					msg := &model.Message{
 						Index:    index,
-						From:     getLifeline(lls, getFromNode(sgmt).Value),
-						To:       getLifeline(lls, getToNode(sgmt).Value),
+						From:     getLifeline(seq.Lifelines, getFromNode(sgmt).Value),
+						To:       getLifeline(seq.Lifelines, getToNode(sgmt).Value),
 						Type:     getMessageType(sgmt),
 						ColorHex: "000000",
 					}
-					msgs = append(msgs, msg)
+					seq.Messages = append(seq.Messages, msg)
 					index++
 					indexCnt++
 				}
@@ -110,7 +111,7 @@ func extractMessagesFromStmts(stmts []ast.Stmt, lls []*model.Lifeline, msgs []*m
 		}
 	}
 
-	return msgs, notes, indexCnt, nil
+	return indexCnt, nil
 }
 
 func getLifeline(lls []*model.Lifeline, name string) *model.Lifeline {
