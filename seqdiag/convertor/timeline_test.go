@@ -60,6 +60,26 @@ seqdiag {
 }
 `
 
+const testDataFragment = `
+seqdiag {
+  loop {
+    foo -> bar;
+	alt {
+      bar -->> baz;
+	}
+    foo <-- bar;
+  }
+}
+`
+
+const testDataEmptyFragment = `
+seqdiag {
+  foo -> bar;
+  loop { }
+  bar -> baz;
+}
+`
+
 func parseDiagram(t *testing.T, testData string) *model.SequenceDiagram {
 	d := seqdiag.ParseSeqdiag([]byte(testData))
 	lls, err := ExtractLifelines(d)
@@ -173,4 +193,40 @@ func TestExtractMessagesNote(t *testing.T) {
 	checkNote(t, seq.Notes[4], 4, false, "Each side notes: Right")
 	checkNote(t, seq.Notes[5], 5, false, "Note on Chained Messages")
 	checkNote(t, seq.Notes[6], 6, false, "Note on Chained Messages")
+}
+
+func checkFragment(t *testing.T, frag *model.Fragment, idx, begin, end int, fragType model.FragmentType) {
+	if frag.Index != idx {
+		t.Fatalf("Mismatches index of fragment [expect: %d, actual: %d]", idx, frag.Index)
+	}
+	if frag.Begin.Index != begin {
+		t.Fatalf("Mismatches index of begin message of the fragment [expect: %d, actual: %d]", begin, frag.Begin.Index)
+	}
+	if frag.End.Index != end {
+		t.Fatalf("Mismatches index of end message of the fragment [expect: %d, actual: %d]", end, frag.End.Index)
+	}
+	if frag.Type != fragType {
+		t.Fatalf("Mismatches type of the fragment [expect: %v, actual: %v]", fragType, frag.Type)
+	}
+}
+
+func TestExtractFragments(t *testing.T) {
+	seq := parseDiagram(t, testDataFragment)
+
+	checkFragment(t, seq.Fragments[0], 0, 0, 2, model.Loop)
+	checkFragment(t, seq.Fragments[1], 1, 1, 1, model.Alt)
+}
+
+func TestExtractFragmentsEmpty(t *testing.T) {
+	d := seqdiag.ParseSeqdiag([]byte(testDataEmptyFragment))
+	lls, err := ExtractLifelines(d)
+	if err != nil {
+		t.Fatalf("Extract error %v", err)
+	}
+
+	seq := &model.SequenceDiagram{Lifelines: lls}
+	err = ScanTimeline(d, seq)
+	if err == nil {
+		t.Fatalf("Expected error does not occure")
+	}
 }
