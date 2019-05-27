@@ -14,6 +14,7 @@ import (
 	"github.com/rsp9u/go-xlsshape/oxml"
 	"github.com/rsp9u/seq2xls"
 	"github.com/rsp9u/seq2xls/seqdiag"
+	"github.com/rsp9u/seq2xls/seqdiag/convertor"
 )
 
 func main() {
@@ -72,17 +73,13 @@ func convert(inpath, outpath string) {
 	d := seqdiag.ParseSeqdiag(b)
 
 	ss := oxml.NewSpreadsheet()
-	lls, err := seqdiag.ExtractLifelines(d)
-	if err != nil {
-		log.Fatal(err)
-	}
-	msgs, notes, err := seqdiag.ExtractMessages(d, lls)
+	seq, err := convertor.AstToModel(d)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	seq2xls.DrawLifelines(ss, lls, len(msgs))
-	seq2xls.DrawMessages(ss, msgs)
-	seq2xls.DrawNotes(ss, notes)
+	seq2xls.DrawLifelines(ss, seq.Lifelines, len(seq.Messages))
+	seq2xls.DrawMessages(ss, seq.Messages)
+	seq2xls.DrawNotes(ss, seq.Notes)
 	ss.Dump(outpath)
 }

@@ -1,9 +1,10 @@
-package extract
+package convertor
 
 import (
 	"testing"
 
 	"github.com/rsp9u/seq2xls/model"
+	"github.com/rsp9u/seq2xls/seqdiag"
 )
 
 const testDataLifeline = `
@@ -30,7 +31,7 @@ func checkLifeline(t *testing.T, ll *model.Lifeline, idx int, name string) {
 }
 
 func TestExtractLifelines(t *testing.T) {
-	d := ParseSeqdiag([]byte(testDataLifeline))
+	d := seqdiag.ParseSeqdiag([]byte(testDataLifeline))
 	lls, err := ExtractLifelines(d)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)

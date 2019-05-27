@@ -1,9 +1,10 @@
-package extract
+package convertor
 
 import (
 	"testing"
 
 	"github.com/rsp9u/seq2xls/model"
+	"github.com/rsp9u/seq2xls/seqdiag"
 )
 
 const testDataMessage = `
@@ -75,7 +76,7 @@ func checkMessage(t *testing.T, msg *model.Message, idx int, from, to string, ms
 }
 
 func TestExtractMessages(t *testing.T) {
-	d := ParseSeqdiag([]byte(testDataMessage))
+	d := seqdiag.ParseSeqdiag([]byte(testDataMessage))
 	lls, err := ExtractLifelines(d)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
@@ -101,7 +102,7 @@ func TestExtractMessages(t *testing.T) {
 }
 
 func TestExtractMessagesTrip(t *testing.T) {
-	d := ParseSeqdiag([]byte(testDataMessageTrip))
+	d := seqdiag.ParseSeqdiag([]byte(testDataMessageTrip))
 	lls, err := ExtractLifelines(d)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
@@ -138,7 +139,7 @@ func checkMessageLabel(t *testing.T, msg *model.Message, label string) {
 }
 
 func TestExtractMessagesLabel(t *testing.T) {
-	d := ParseSeqdiag([]byte(testDataMessageLabel))
+	d := seqdiag.ParseSeqdiag([]byte(testDataMessageLabel))
 	lls, err := ExtractLifelines(d)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)
@@ -171,7 +172,7 @@ func checkNote(t *testing.T, note *model.Note, idx int, onLeft bool, text string
 }
 
 func TestExtractMessagesNote(t *testing.T) {
-	d := ParseSeqdiag([]byte(testDataMessageNote))
+	d := seqdiag.ParseSeqdiag([]byte(testDataMessageNote))
 	lls, err := ExtractLifelines(d)
 	if err != nil {
 		t.Fatalf("Extract error %v", err)

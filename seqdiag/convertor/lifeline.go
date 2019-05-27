@@ -1,4 +1,4 @@
-package extract
+package convertor
 
 import (
 	"github.com/rsp9u/seq2xls/model"
