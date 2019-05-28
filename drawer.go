@@ -11,10 +11,10 @@ import (
 )
 
 type fragmentReserve struct {
-	left, right, top int
-	leftLifeline     *model.Lifeline
-	rightLifeline    *model.Lifeline
-	body             *model.Fragment
+	left, right, top, bottom int
+	leftLifeline             *model.Lifeline
+	rightLifeline            *model.Lifeline
+	body                     *model.Fragment
 }
 
 const (
@@ -28,6 +28,8 @@ const (
 	fragOffsetX = spanX / 3
 	fragMarginX = 8
 	fragMarginY = 24
+	fragGuardX  = 48
+	fragGuardY  = 24
 )
 
 // DrawSequenceDiagram draws a sequence diagram into the given spreadsheet.
@@ -118,14 +120,9 @@ func drawTimeline(ss *oxml.Spreadsheet, seq *model.SequenceDiagram) (y int) {
 			}
 			fragRsvs.Pop()
 			y += fragMarginY
-			bottom := y
+			frag.bottom = y
 
-			rect := shape.NewRectangle()
-			rect.SetLeftTop(frag.left, frag.top)
-			rect.SetSize(frag.right-frag.left, bottom-frag.top)
-			rect.SetNoFill(true)
-			rect.SetText(frag.body.Type.String(), "en-US")
-			ss.AddShape(rect)
+			drawFragment(ss, frag)
 		}
 		if fragRsvs.Len() != 0 {
 			frag, ok := fragRsvs.Peek().(*fragmentReserve)
@@ -215,6 +212,24 @@ func drawNote(ss *oxml.Spreadsheet, note *model.Note, y int) (deltaY int) {
 	ss.AddShape(rect)
 
 	return 0
+}
+
+func drawFragment(ss *oxml.Spreadsheet, frag *fragmentReserve) {
+	rect := shape.NewRectangle()
+	rect.SetLeftTop(frag.left, frag.top)
+	rect.SetSize(frag.right-frag.left, frag.bottom-frag.top)
+	rect.SetNoFill(true)
+	rect.SetText(frag.body.Type.String(), "en-US")
+	ss.AddShape(rect)
+
+	line1 := shape.NewLine()
+	line2 := shape.NewLine()
+	line1.SetStartPos(frag.left, frag.top+fragGuardY)
+	line1.SetEndPos(frag.left+fragGuardX, frag.top+fragGuardY)
+	line2.SetStartPos(frag.left+fragGuardX, frag.top+fragGuardY)
+	line2.SetEndPos(frag.left+fragGuardX+12, frag.top)
+	ss.AddShape(line1)
+	ss.AddShape(line2)
 }
 
 func maxLine(text string) int {
