@@ -78,8 +78,6 @@ func convert(inpath, outpath string) {
 		log.Fatal(err)
 	}
 
-	seq2xls.DrawLifelines(ss, seq.Lifelines, len(seq.Messages))
-	seq2xls.DrawMessages(ss, seq.Messages)
-	seq2xls.DrawNotes(ss, seq.Notes)
+	seq2xls.DrawSequenceDiagram(ss, seq)
 	ss.Dump(outpath)
 }
