@@ -32,14 +32,14 @@ const (
 
 // DrawSequenceDiagram draws a sequence diagram into the given spreadsheet.
 func DrawSequenceDiagram(ss *oxml.Spreadsheet, seq *model.SequenceDiagram) {
-	drawLifelines(ss, seq.Lifelines, len(seq.Messages))
-	drawTimeline(ss, seq)
+	bottom := drawTimeline(ss, seq)
+	drawLifelines(ss, seq.Lifelines, bottom)
 }
 
 // drawLifelines adds the shapes which composes 'Lifeline' into the spreadsheet.
 //
 // 'Lifeline' is composed of a rectangle and a dashed line.
-func drawLifelines(ss *oxml.Spreadsheet, lls []*model.Lifeline, nMsg int) {
+func drawLifelines(ss *oxml.Spreadsheet, lls []*model.Lifeline, bottom int) {
 	for _, ll := range lls {
 		i := ll.Index
 		rect := shape.NewRectangle()
@@ -54,7 +54,7 @@ func drawLifelines(ss *oxml.Spreadsheet, lls []*model.Lifeline, nMsg int) {
 		rectBottom := marginY + sizeY
 		line := shape.NewLine()
 		line.SetStartPos(rectXCenter, rectBottom)
-		line.SetEndPos(rectXCenter, rectBottom+spanY*(nMsg+1)+tailY)
+		line.SetEndPos(rectXCenter, bottom+tailY)
 		line.SetDashType("dash")
 		ss.AddShape(line)
 	}
@@ -65,8 +65,8 @@ func calcLifelineCenterX(ll *model.Lifeline) int {
 }
 
 // drawTimeline adds the shapes of the time series elements into the spreadsheet.
-func drawTimeline(ss *oxml.Spreadsheet, seq *model.SequenceDiagram) {
-	y := marginY + sizeY + spanY
+func drawTimeline(ss *oxml.Spreadsheet, seq *model.SequenceDiagram) (y int) {
+	y = marginY + sizeY + spanY
 	fragRsvs := stack.New()
 	fragLimitLeft := 0
 	fragLimitRight := math.MaxInt32
@@ -140,6 +140,8 @@ func drawTimeline(ss *oxml.Spreadsheet, seq *model.SequenceDiagram) {
 
 		y += deltaY
 	}
+
+	return
 }
 
 func drawMessage(ss *oxml.Spreadsheet, msg *model.Message, y int) (deltaY int) {
