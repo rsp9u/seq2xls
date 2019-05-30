@@ -170,7 +170,7 @@ type SeparatorStmt struct {
 }
 
 func NewSeparatorStmt(attr Attr) (*SeparatorStmt, error) {
-	s := attr.(string)
+	s := TokenToString(attr)
 	return &SeparatorStmt{s[0:3], strings.TrimSpace(s[3 : len(s)-3])}, nil
 }
 

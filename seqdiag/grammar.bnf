@@ -18,13 +18,19 @@ _whitespace : _space | _tab | _newline ;
 _symbol : '\x21'-'\x2f' | '\x3a'-'\x40' | '\x5b'-'\x60' | '\x7b'-'\x7e' ;
 _symbol_expect_dq : '\x21' | '\x23'-'\x2f' | '\x3a'-'\x40' | '\x5b'-'\x60' | '\x7b'-'\x7e' ;
 _symbol_expect_sq : '\x21'-'\x26' | '\x28'-'\x2f' | '\x3a'-'\x40' | '\x5b'-'\x60' | '\x7b'-'\x7e' ;
+_symbol_expect_eq : '\x21'-'\x2f' | '\x3a'-'\x3c' | '\x3e'-'\x40' | '\x5b'-'\x60' | '\x7b'-'\x7e' ;
+_symbol_expect_dot : '\x21'-'\x2d' | '\x2f' | '\x3a'-'\x40' | '\x5b'-'\x60' | '\x7b'-'\x7e' ;
 _ascii_printable : _letter | _digit | _symbol ;
 _ascii_printable_expect_dq : _letter | _digit | _symbol_expect_dq ;
 _ascii_printable_expect_sq : _letter | _digit | _symbol_expect_sq ;
+_ascii_printable_expect_eq : _letter | _digit | _symbol_expect_eq ;
+_ascii_printable_expect_dot : _letter | _digit | _symbol_expect_dot ;
 _unicode : '\u0080'-'\uffff' ;
 _rune : _ascii_printable | _unicode ;
 _rune_expect_dq : _ascii_printable_expect_dq | _unicode ;
 _rune_expect_sq : _ascii_printable_expect_sq | _unicode ;
+_rune_expect_eq : _ascii_printable_expect_eq | _unicode ;
+_rune_expect_dot : _ascii_printable_expect_dot | _unicode ;
 
 /** Token definitions **/
 
@@ -34,8 +40,8 @@ _singleline_comment : ('/' '/' | '#') (_rune | _space | _tab) { (_rune | _space 
 
 _separator_mark_eq : '=' '=' '=' ;
 _separator_mark_dot : '.' '.' '.' ;
-_separator_eq : _separator_mark_eq _rune { _rune } _separator_mark_eq ;
-_separator_dot : _separator_mark_dot _rune { _rune } _separator_mark_dot ;
+_separator_eq : _separator_mark_eq (_rune_expect_eq | _whitespace) {(_rune_expect_eq | _whitespace)} _separator_mark_eq ;
+_separator_dot : _separator_mark_dot (_rune_expect_dot | _whitespace) {(_rune_expect_dot | _whitespace)} _separator_mark_dot ;
 separator : _separator_eq | _separator_dot ;
 
 _namehead : _letter | _digit | _underscore | _unicode ;
@@ -159,7 +165,7 @@ EdgeSegmentList
 
 EdgeBlockInlineStmtList
 	: EdgeBlockInlineStmt							<< ast.NewEdgeBlockInlineStmtList(nil, $0) >>
-	| EdgeBlockInlineStmtList EdgeBlockInlineStmt	<< ast.NewEdgeBlockInlineStmtList($1, $0) >>
+	| EdgeBlockInlineStmtList EdgeBlockInlineStmt	<< ast.NewEdgeBlockInlineStmtList($0, $1) >>
 	;
 
 EdgeBlockInlineStmt
