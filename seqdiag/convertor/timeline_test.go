@@ -253,7 +253,7 @@ func checkSeparator(t *testing.T, sep *model.Separator, text string, beforeFrom 
 	if sep.Text != text {
 		t.Fatalf("Mismatches text of separator [expect: %s, actual: %s]", text, sep.Text)
 	}
-	if (beforeFrom == "nil" && sep.Before.From != nil) || (sep.Before.From.Name != beforeFrom) {
+	if (beforeFrom == "nil" && sep.Before != nil) || (beforeFrom != "nil" && sep.Before.From.Name != beforeFrom) {
 		t.Fatalf("Mismatches message of before separator [expect: %s, actual: %s]", beforeFrom, sep.Before.From.Name)
 	}
 }
