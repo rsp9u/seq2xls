@@ -116,6 +116,16 @@ func scanTimelineInStmts(stmts []ast.Stmt, seq *model.SequenceDiagram) error {
 					seq.Messages = append(seq.Messages, msg)
 				}
 			}
+		case *ast.SeparatorStmt:
+			var beforeMsg *model.Message
+			if len(seq.Messages) > 0 {
+				beforeMsg = seq.Messages[len(seq.Messages)-1]
+			}
+			sep := &model.Separator{
+				Text:   v.Value,
+				Before: beforeMsg,
+			}
+			seq.Separators = append(seq.Separators, sep)
 		}
 	}
 

@@ -80,6 +80,24 @@ seqdiag {
 }
 `
 
+const testDataSeparator = `
+seqdiag {
+  ... Sep1 ...
+  foo1 -> foo1;
+  === Sep2 ===
+  foo2 -> foo2;
+  === Sep3 ===
+  foo3 -> foo3 {
+    === Sep4 ===
+    foo4 -> foo4;
+    === Sep5 ===
+  }
+  === Sep6 ===
+  foo5 -> foo5;
+  === Sep7 ===
+}
+`
+
 func parseDiagram(t *testing.T, testData string) *model.SequenceDiagram {
 	d := seqdiag.ParseSeqdiag([]byte(testData))
 	lls, err := ExtractLifelines(d)
@@ -229,4 +247,25 @@ func TestExtractFragmentsEmpty(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Expected error does not occure")
 	}
+}
+
+func checkSeparator(t *testing.T, sep *model.Separator, text string, beforeFrom string) {
+	if sep.Text != text {
+		t.Fatalf("Mismatches text of separator [expect: %s, actual: %s]", text, sep.Text)
+	}
+	if (beforeFrom == "nil" && sep.Before.From != nil) || (sep.Before.From.Name != beforeFrom) {
+		t.Fatalf("Mismatches message of before separator [expect: %s, actual: %s]", beforeFrom, sep.Before.From.Name)
+	}
+}
+
+func TestExtractSeparator(t *testing.T) {
+	seq := parseDiagram(t, testDataSeparator)
+
+	checkSeparator(t, seq.Separators[0], "Sep1", "nil")
+	checkSeparator(t, seq.Separators[1], "Sep2", "foo1")
+	checkSeparator(t, seq.Separators[2], "Sep3", "foo2")
+	checkSeparator(t, seq.Separators[3], "Sep4", "foo3")
+	checkSeparator(t, seq.Separators[4], "Sep5", "foo4")
+	checkSeparator(t, seq.Separators[5], "Sep6", "foo4")
+	checkSeparator(t, seq.Separators[6], "Sep7", "foo5")
 }
