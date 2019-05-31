@@ -73,6 +73,13 @@ func drawTimeline(ss *oxml.Spreadsheet, seq *model.SequenceDiagram) (y int) {
 	fragLimitLeft := 0
 	fragLimitRight := math.MaxInt32
 
+	for _, sep := range seq.Separators {
+		if sep.Before == nil {
+			deltaY := drawSeparator(ss, sep, y, len(seq.Lifelines))
+			y += deltaY
+		}
+	}
+
 	for _, msg := range seq.Messages {
 		// fragment opening
 		for _, frag := range seq.Fragments {
@@ -136,12 +143,20 @@ func drawTimeline(ss *oxml.Spreadsheet, seq *model.SequenceDiagram) (y int) {
 		}
 
 		y += deltaY
+
+		for _, sep := range seq.Separators {
+			if sep.Before == msg {
+				deltaY := drawSeparator(ss, sep, y, len(seq.Lifelines))
+				y += deltaY
+			}
+		}
 	}
 
 	return
 }
 
 func drawMessage(ss *oxml.Spreadsheet, msg *model.Message, y int) (deltaY int) {
+	y += spanY / 2
 	if msg.Type != model.SelfReference {
 		line := shape.NewLine()
 		line.SetStartPos(calcLifelineCenterX(msg.From), y)
@@ -230,6 +245,33 @@ func drawFragment(ss *oxml.Spreadsheet, frag *fragmentReserve) {
 	line2.SetEndPos(frag.left+fragGuardX+12, frag.top)
 	ss.AddShape(line1)
 	ss.AddShape(line2)
+}
+
+func drawSeparator(ss *oxml.Spreadsheet, sep *model.Separator, y, nLls int) (deltaY int) {
+	left := marginX
+	right := marginX + spanX*(nLls-1) + sizeX
+	center := (right-left)/2 + left
+
+	line1 := shape.NewLine()
+	line2 := shape.NewLine()
+	line1.SetStartPos(left, y+12)
+	line1.SetEndPos(right, y+12)
+	line2.SetStartPos(left, y+18)
+	line2.SetEndPos(right, y+18)
+	ss.AddShape(line1)
+	ss.AddShape(line2)
+
+	w := len(sep.Text) * 12
+	h := 20
+	rect := shape.NewRectangle()
+	rect.SetLeftTop(center-w/2, y+15-h/2)
+	rect.SetSize(w, h)
+	rect.SetText(sep.Text, "en-US")
+	rect.SetHAlign("ctr")
+	rect.SetVAlign("ctr")
+	ss.AddShape(rect)
+
+	return 12 + 6 + 12
 }
 
 func maxLine(text string) int {
