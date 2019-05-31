@@ -58,7 +58,7 @@ func drawLifelines(ss *oxml.Spreadsheet, lls []*model.Lifeline, bottom int) {
 		line.SetStartPos(rectXCenter, rectBottom)
 		line.SetEndPos(rectXCenter, bottom+tailY)
 		line.SetDashType("dash")
-		ss.AddShape(line)
+		ss.UnshiftShape(line)
 	}
 }
 

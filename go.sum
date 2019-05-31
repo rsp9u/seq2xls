@@ -4,3 +4,5 @@ github.com/rsp9u/go-xlsshape v0.0.1 h1:GANYsy1xCWXlPhYQvZp6nufECoq9KQ+QuOwR8R1bM
 github.com/rsp9u/go-xlsshape v0.0.1/go.mod h1:qp6xgr+vnJ2X02wNeHZsFfKI09XNkTPOIhuY45Gx6OE=
 github.com/rsp9u/go-xlsshape v0.0.2 h1:Kh4KdFTLz1U+dGC35SJCN9YdagPvOeRpLqvEcxYe7Uk=
 github.com/rsp9u/go-xlsshape v0.0.2/go.mod h1:qp6xgr+vnJ2X02wNeHZsFfKI09XNkTPOIhuY45Gx6OE=
+github.com/rsp9u/go-xlsshape v0.0.3 h1:aAiqjiNhMuyM0pykONLN+OAR0hfkcdCzPEak9QPF1I4=
+github.com/rsp9u/go-xlsshape v0.0.3/go.mod h1:qp6xgr+vnJ2X02wNeHZsFfKI09XNkTPOIhuY45Gx6OE=
