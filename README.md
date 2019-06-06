@@ -17,6 +17,6 @@ $ ./seq2xls -i simple.diag -o simple.xlsx
 
 # Usage (Windows)
 
-1. Download Windows binary from [here](https://github.com/rsp9u/seq2xls/releases/latest/download/seq2xls.exe)
+1. Download Windows binary from [here](https://github.com/rsp9u/seq2xls/releases)
 2. Drag&Drop "*.diag" files
 
